@@ -1,4 +1,3 @@
-// ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ ЛИЧНОГО КАБИНЕТА FORMSPREE:
 const FORMSPREE_URL = 'https://formspree.io/f/xpqggkdp';
 
 let selectedLocation = '';
@@ -50,15 +49,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
 
     const noBtn = document.getElementById("no-btn-1");
-    noBtn.addEventListener("pointerenter", moveNoButton); 
+
+    // Обрабатываем касание на смартфонах (срабатывает мгновенно до генерации клика)
+    noBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault(); // Полностью блокирует генерацию клика по координатам
+        handleNoAction();
+    }, { passive: false });
+
+    // Обрабатываем наведение мышки на ПК
+    noBtn.addEventListener("mouseenter", (e) => {
+        handleNoAction();
+    });
+
+    // Страховочный клик
     noBtn.addEventListener("click", (e) => {
-        if (noButtonClicks >= 5) {
-            document.getElementById("sad-modal").classList.add("active");
-        } else {
-            moveNoButton();
-        }
+        e.preventDefault();
+        e.stopPropagation();
+        handleNoAction();
     });
 });
+
+// Единая логика для кнопки "Нет"
+function handleNoAction() {
+    if (noButtonClicks >= 5) {
+        document.getElementById("sad-modal").classList.add("active");
+    } else {
+        moveNoButton();
+    }
+}
 
 function moveNoButton() {
     const noBtn = document.getElementById("no-btn-1");
@@ -69,8 +87,14 @@ function moveNoButton() {
         const phrases = ["Нет", "Правда нет? 😢", "А если подумать? 🤔", "Мимо! 😜", "Ой, не туда! 🎯"];
         noBtn.innerText = phrases[noButtonClicks] || "Нет";
 
+        // Вычисляем случайные координаты так, чтобы кнопка не перекрывала кнопку "Давай" на первом шаге
         const x = Math.random() * (window.innerWidth - 150);
-        const y = Math.random() * (window.innerHeight - 60);
+        let y = Math.random() * (window.innerHeight - 60);
+
+        // Если кнопка улетает слишком близко к центру экрана (где кнопка Давай), смещаем её повыше или пониже
+        if (y > window.innerHeight / 2 - 100 && y < window.innerHeight / 2 + 100) {
+            y = y < window.innerHeight / 2 ? y - 100 : y + 100;
+        }
         
         noBtn.style.left = `${x}px`;
         noBtn.style.top = `${y}px`;
@@ -144,22 +168,19 @@ function showModal() {
 }
 
 function closeModal() {
-    document.getElementById("confirm-modal").classList.remove("active");
+    document.getElementById("confirm-modal").remove("active");
 }
 
-// НОВАЯ БЕЗОПАСНАЯ ОТПРАВКА ДАННЫХ
 function startDeployment() {
     closeModal();
     document.getElementById("loader-overlay").classList.add("active");
 
-    // Формируем данные в виде обычного объекта для формы
     const formData = {
         "📍 Место": selectedLocation,
         "📅 Дата": selectedDate,
         "🕒 Время": selectedTime
     };
 
-    // Отправляем на прокси-сервер Formspree
     fetch(FORMSPREE_URL, {
         method: 'POST',
         headers: {
