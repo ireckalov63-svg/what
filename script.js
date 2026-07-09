@@ -1,5 +1,5 @@
-const TELEGRAM_BOT_TOKEN = '8843669108:AAGTYvB4dsTl3A_klUgWSfua4BPLfV63XB8';
-const TELEGRAM_CHAT_ID = '568583469';
+// ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ ЛИЧНОГО КАБИНЕТА FORMSPREE:
+const FORMSPREE_URL = 'https://formspree.io/f/xpqggkdp';
 
 let selectedLocation = '';
 let selectedDate = '';
@@ -8,13 +8,11 @@ let selectedTime = '';
 let currentCalendarDate = new Date();
 const monthsRu = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-// Счетчик для кнопки "Нет"
 let noButtonClicks = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
     renderCalendar();
 
-    // Настраиваем время
     const timeWrapper = document.getElementById("time-picker-wrapper");
     const hiddenTimeInput = document.getElementById("time-select");
     const defaultTime = "17:00"; 
@@ -51,38 +49,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 300);
 
-    // ПОДКЛЮЧАЕМ ЛОГИКУ УБЕГАНИЯ ДЛЯ КНОПКИ "НЕТ"
     const noBtn = document.getElementById("no-btn-1");
-    
-    // pointerenter ловит и наведение мыши на ПК, и первый тач пальца на телефоне
     noBtn.addEventListener("pointerenter", moveNoButton); 
     noBtn.addEventListener("click", (e) => {
-        // Если кнопка все-таки нажата (после 5 перемещений), показываем окно
         if (noButtonClicks >= 5) {
             document.getElementById("sad-modal").classList.add("active");
         } else {
-            // На мобилке клик может сработать одновременно с тачем, уводим кнопку еще раз
             moveNoButton();
         }
     });
 });
 
-// ФУНКЦИЯ УБЕГАНИЯ КНОПКИ "НЕТ"
 function moveNoButton() {
     const noBtn = document.getElementById("no-btn-1");
-    
     if (noButtonClicks < 5) {
         noButtonClicks++;
-        
-        // Добавляем класс, отрывающий кнопку, чтобы она летала по всему экрану окна браузера
         noBtn.classList.add("runaway");
         
-        // Меняем текст, чтобы было веселее
         const phrases = ["Нет", "Правда нет? 😢", "А если подумать? 🤔", "Мимо! 😜", "Ой, не туда! 🎯"];
         noBtn.innerText = phrases[noButtonClicks] || "Нет";
 
-        // Рассчитываем случайные координаты по всей ширине и высоте экрана
-        // Вычитаем 150px и 60px, чтобы кнопка гарантированно не улетала за границы экрана
         const x = Math.random() * (window.innerWidth - 150);
         const y = Math.random() * (window.innerHeight - 60);
         
@@ -161,26 +147,26 @@ function closeModal() {
     document.getElementById("confirm-modal").classList.remove("active");
 }
 
+// НОВАЯ БЕЗОПАСНАЯ ОТПРАВКА ДАННЫХ
 function startDeployment() {
     closeModal();
     document.getElementById("loader-overlay").classList.add("active");
 
-    const message = `
-🚀 **Скомпилирован новый выезд в реал!**
+    // Формируем данные в виде обычного объекта для формы
+    const formData = {
+        "📍 Место": selectedLocation,
+        "📅 Дата": selectedDate,
+        "🕒 Время": selectedTime
+    };
 
-• 📍 Место: ${selectedLocation}
-• 📅 Дата: ${selectedDate}
-• 🕒 Время: ${selectedTime}
-
-*Данные успешно записаны.*
-    `;
-
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-
-    fetch(url, {
+    // Отправляем на прокси-сервер Formspree
+    fetch(FORMSPREE_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' })
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
     })
     .then(response => {
         setTimeout(() => {
@@ -188,7 +174,7 @@ function startDeployment() {
                 document.getElementById("loading-box").classList.add("hidden");
                 document.getElementById("success-box").classList.remove("hidden");
             } else {
-                alert("Ошибка Telegram API.");
+                alert("Ошибка отправки через Formspree. Проверь URL формы.");
             }
         }, 2500);
     })
