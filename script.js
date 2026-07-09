@@ -1,3 +1,4 @@
+// ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ ЛИЧНОГО КАБИНЕТА FORMSPREE:
 const FORMSPREE_URL = 'https://formspree.io/f/xpqggkdp';
 
 let selectedLocation = '';
@@ -15,7 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const timeWrapper = document.getElementById("time-picker-wrapper");
     const hiddenTimeInput = document.getElementById("time-select");
+    
+    // Выставили дефолтное время по нулям
     const defaultTime = "00:00"; 
+    hiddenTimeInput.value = defaultTime; // Сразу пишем в скрытый инпут
 
     for (let h = 0; h < 24; h++) {
         for (let m = 0; m < 60; m += 30) {
@@ -42,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     
+    // Скролл теперь тоже плавно крутит к выбранному defaultTime (то есть к 00:00 на самый верх)
     setTimeout(() => {
         const defaultCard = document.querySelector(`[data-time="${defaultTime}"]`);
         if (defaultCard) {
@@ -52,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const noBtn = document.getElementById("no-btn-1");
     const yesBtn = document.getElementById("yes-btn");
 
-    // Кнопка "Давай" теперь нажимается с проверкой на блокировку
     yesBtn.addEventListener("click", (e) => {
         if (isYesButtonBlocked) {
             e.preventDefault();
@@ -70,33 +74,29 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, { passive: false });
 
-    // Обработка кнопки "Нет" на смартфонах
     noBtn.addEventListener("touchstart", (e) => {
         e.preventDefault();
-        blockYesButtonTemporarily(); // Включаем защиту
+        blockYesButtonTemporarily(); 
         handleNoAction();
     }, { passive: false });
 
-    // Обработка наведения мыши на ПК
     noBtn.addEventListener("mouseenter", (e) => {
         handleNoAction();
     });
 
-    // Страховочный клик для "Нет"
     noBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        blockYesButtonTemporarily(); // Включаем защиту
+        blockYesButtonTemporarily(); 
         handleNoAction();
     });
 });
 
-// Функция временной блокировки кнопки "Давай" на 400 миллисекунд
 function blockYesButtonTemporarily() {
     isYesButtonBlocked = true;
     setTimeout(() => {
         isYesButtonBlocked = false;
-    }, 400); // Этого времени с запасом хватит, чтобы мобильный "призрачный" клик испарился
+    }, 400); 
 }
 
 function handleNoAction() {
@@ -230,4 +230,5 @@ function startDeployment() {
         console.error(error);
         alert("Ошибка сети.");
     });
-}
+    }
+                          
