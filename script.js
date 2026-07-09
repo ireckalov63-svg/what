@@ -8,6 +8,7 @@ let currentCalendarDate = new Date();
 const monthsRu = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
 let noButtonClicks = 0;
+let isYesButtonBlocked = false; // Предохранитель от призрачных кликов
 
 document.addEventListener("DOMContentLoaded", () => {
     renderCalendar();
@@ -49,27 +50,55 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
 
     const noBtn = document.getElementById("no-btn-1");
+    const yesBtn = document.getElementById("yes-btn");
 
-    // Обрабатываем касание на смартфонах (срабатывает мгновенно до генерации клика)
+    // Кнопка "Давай" теперь нажимается с проверкой на блокировку
+    yesBtn.addEventListener("click", (e) => {
+        if (isYesButtonBlocked) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+        nextStep(2);
+    });
+
+    yesBtn.addEventListener("touchstart", (e) => {
+        if (isYesButtonBlocked) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }, { passive: false });
+
+    // Обработка кнопки "Нет" на смартфонах
     noBtn.addEventListener("touchstart", (e) => {
-        e.preventDefault(); // Полностью блокирует генерацию клика по координатам
+        e.preventDefault();
+        blockYesButtonTemporarily(); // Включаем защиту
         handleNoAction();
     }, { passive: false });
 
-    // Обрабатываем наведение мышки на ПК
+    // Обработка наведения мыши на ПК
     noBtn.addEventListener("mouseenter", (e) => {
         handleNoAction();
     });
 
-    // Страховочный клик
+    // Страховочный клик для "Нет"
     noBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        blockYesButtonTemporarily(); // Включаем защиту
         handleNoAction();
     });
 });
 
-// Единая логика для кнопки "Нет"
+// Функция временной блокировки кнопки "Давай" на 400 миллисекунд
+function blockYesButtonTemporarily() {
+    isYesButtonBlocked = true;
+    setTimeout(() => {
+        isYesButtonBlocked = false;
+    }, 400); // Этого времени с запасом хватит, чтобы мобильный "призрачный" клик испарился
+}
+
 function handleNoAction() {
     if (noButtonClicks >= 5) {
         document.getElementById("sad-modal").classList.add("active");
@@ -87,11 +116,9 @@ function moveNoButton() {
         const phrases = ["Нет", "Правда нет? 😢", "А если подумать? 🤔", "Мимо! 😜", "Ой, не туда! 🎯"];
         noBtn.innerText = phrases[noButtonClicks] || "Нет";
 
-        // Вычисляем случайные координаты так, чтобы кнопка не перекрывала кнопку "Давай" на первом шаге
         const x = Math.random() * (window.innerWidth - 150);
         let y = Math.random() * (window.innerHeight - 60);
 
-        // Если кнопка улетает слишком близко к центру экрана (где кнопка Давай), смещаем её повыше или пониже
         if (y > window.innerHeight / 2 - 100 && y < window.innerHeight / 2 + 100) {
             y = y < window.innerHeight / 2 ? y - 100 : y + 100;
         }
@@ -168,7 +195,7 @@ function showModal() {
 }
 
 function closeModal() {
-    document.getElementById("confirm-modal").remove("active");
+    document.getElementById("confirm-modal").classList.remove("active");
 }
 
 function startDeployment() {
