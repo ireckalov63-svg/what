@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const timeWrapper = document.getElementById("time-picker-wrapper");
     const hiddenTimeInput = document.getElementById("time-select");
-    const defaultTime = "17:00"; 
+    const defaultTime = "00:00"; 
 
     for (let h = 0; h < 24; h++) {
         for (let m = 0; m < 60; m += 30) {
