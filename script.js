@@ -1,7 +1,6 @@
-// ВСТАВЬ СЮДА СВОЮ ССЫЛКУ ИЗ ЛИЧНОГО КАБИНЕТА FORMSPREE:
 const FORMSPREE_URL = 'https://formspree.io/f/xpqggkdp';
 
-let selectedLocation = '';
+let selectedLocation = 'Не выбрано (Екатеринбург)';
 let selectedDate = '';
 let selectedTime = '';
 
@@ -9,17 +8,20 @@ let currentCalendarDate = new Date();
 const monthsRu = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
 let noButtonClicks = 0;
-let isYesButtonBlocked = false; // Предохранитель от призрачных кликов
+let isYesButtonBlocked = false; 
+
+let map, marker;
+const defaultCoords = [56.8389, 60.6057]; // Координаты Екатеринбурга
 
 document.addEventListener("DOMContentLoaded", () => {
     renderCalendar();
+    initMap(); 
 
     const timeWrapper = document.getElementById("time-picker-wrapper");
     const hiddenTimeInput = document.getElementById("time-select");
     
-    // Выставили дефолтное время по нулям
     const defaultTime = "00:00"; 
-    hiddenTimeInput.value = defaultTime; // Сразу пишем в скрытый инпут
+    hiddenTimeInput.value = defaultTime;
 
     for (let h = 0; h < 24; h++) {
         for (let m = 0; m < 60; m += 30) {
@@ -46,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     
-    // Скролл теперь тоже плавно крутит к выбранному defaultTime (то есть к 00:00 на самый верх)
     setTimeout(() => {
         const defaultCard = document.querySelector(`[data-time="${defaultTime}"]`);
         if (defaultCard) {
@@ -91,6 +92,106 @@ document.addEventListener("DOMContentLoaded", () => {
         handleNoAction();
     });
 });
+
+function initMap() {
+    map = L.map('map', {
+        zoomControl: true,
+        attributionControl: false
+    }).setView(defaultCoords, 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    marker = L.marker(defaultCoords, { draggable: true }).addTo(map);
+
+    silentGeocode(defaultCoords[0], defaultCoords[1]);
+
+    map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        marker.setLatLng([lat, lng]);
+        reverseGeocode(lat, lng);
+    });
+
+    marker.on('dragend', () => {
+        const { lat, lng } = marker.getLatLng();
+        reverseGeocode(lat, lng);
+    });
+
+    const searchInput = document.getElementById('map-search-input');
+    const MathResultsContainer = document.getElementById('search-results');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        const query = searchInput.value.trim();
+        
+        if (query.length < 3) {
+            MathResultsContainer.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+                .then(res => res.json())
+                .then(data => {
+                    MathResultsContainer.innerHTML = '';
+                    if (data.length === 0) {
+                        MathResultsContainer.style.display = 'none';
+                        return;
+                    }
+                    
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'search-item';
+                        div.innerText = item.display_name;
+                        div.addEventListener('click', () => {
+                            const lat = parseFloat(item.lat);
+                            const lon = parseFloat(item.lon);
+                            
+                            map.setView([lat, lon], 16);
+                            marker.setLatLng([lat, lon]);
+                            
+                            selectedLocation = `${item.display_name} | Гугл-карта: https://www.google.com/maps?q=${lat},${lon}`;
+                            searchInput.value = item.display_name;
+                            MathResultsContainer.style.display = 'none';
+                        });
+                        MathResultsContainer.appendChild(div);
+                    });
+                    MathResultsContainer.style.display = 'block';
+                });
+        }, 400);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.map-search-container')) {
+            MathResultsContainer.style.display = 'none';
+        }
+    });
+}
+
+function silentGeocode(lat, lng) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(res => res.json())
+        .then(data => {
+            const address = data.display_name || `Екатеринбург (Центр)`;
+            selectedLocation = `${address} | Гугл-карта: https://www.google.com/maps?q=${lat},${lng}`;
+        })
+        .catch(() => {
+            selectedLocation = `Екатеринбург | Гугл-карта: https://www.google.com/maps?q=${lat},${lng}`;
+        });
+}
+
+function reverseGeocode(lat, lng) {
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(res => res.json())
+        .then(data => {
+            const address = data.display_name || `Координаты: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            document.getElementById('map-search-input').value = address;
+            selectedLocation = `${address} | Гугл-карта: https://www.google.com/maps?q=${lat},${lng}`;
+        })
+        .catch(() => {
+            selectedLocation = `Координаты: ${lat}, ${lng} | Гугл-карта: https://www.google.com/maps?q=${lat},${lng}`;
+        });
+}
 
 function blockYesButtonTemporarily() {
     isYesButtonBlocked = true;
@@ -181,12 +282,14 @@ function changeMonth(direction) {
 }
 
 function nextStep(stepNumber) {
-    if (stepNumber === 3) {
-        const inputVal = document.getElementById("location-input").value.trim();
-        selectedLocation = inputVal !== "" ? inputVal : "Не указано";
-    }
     document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
     document.getElementById(`step-${stepNumber}`).classList.add('active');
+    
+    if (stepNumber === 2) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 200);
+    }
 }
 
 function showModal() {
@@ -203,7 +306,7 @@ function startDeployment() {
     document.getElementById("loader-overlay").classList.add("active");
 
     const formData = {
-        "📍 Место": selectedLocation,
+        "📍 Место и Карта": selectedLocation,
         "📅 Дата": selectedDate,
         "🕒 Время": selectedTime
     };
@@ -230,5 +333,4 @@ function startDeployment() {
         console.error(error);
         alert("Ошибка сети.");
     });
-    }
-                          
+}
