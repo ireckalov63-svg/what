@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>git checkout real_life</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,8 +18,8 @@
 
         <div class="terminal-body">
             <div id="step-1" class="step active">
-                <h1>&gt; git checkout real_life</h1>
-                <p class="subtitle">Переписываться в телеграме — это здорово, но пора уже пообщаться вживую, правда я не умею и не знаю о чём. Как смотришь на то, чтобы пересечься? 👇</p>
+                <h1>> git checkout real_life</h1>
+                <p class="subtitle">Переписываться в Telegram — это здорово, но пора уже пообщаться вживую, правда я не умею и не знаю о чём. Как смотришь на то, чтобы пересечься? 👇</p>
                 <div class="btn-group">
                     <button id="yes-btn" class="btn btn-success">Давай ✨</button>
                     <button id="no-btn-1" class="btn btn-danger">Нет</button>
@@ -26,23 +27,30 @@
             </div>
 
             <div id="step-2" class="step">
-                <h1>&gt; Сбор параметров [1/3]</h1>
-                <p class="subtitle">Где тебе было бы удобно встретиться? Напиши локацию или район:</p>
-                <input type="text" id="location-input" placeholder="..." autocomplete="off">
+                <h1>> Сбор параметров [1/3]</h1>
+                <p class="subtitle">Укажи на карте или введи адрес, где тебе удобно встретиться:</p>
+                
+                <div class="map-search-container">
+                    <input type="text" id="map-search-input" placeholder="Введите город, улицу (например: Ленина 40)..." autocomplete="off">
+                    <div id="search-results" class="search-results" style="display: none;"></div>
+                </div>
+
+                <div id="map"></div>
+
                 <div class="btn-group">
                     <button onclick="nextStep(3)" class="btn btn-success">Далее</button>
                 </div>
             </div>
 
             <div id="step-3" class="step">
-                <h1>&gt; Сбор параметров [2/3]</h1>
-                <p class="subtitle">Выбери удобный день встречи(только не сегодня):</p>
+                <h1>> Сбор параметров [2/3]</h1>
+                <p class="subtitle">Выбери удобный день встречи (только не сегодня):</p>
                 
                 <div class="custom-calendar">
                     <div class="calendar-header">
-                        <button onclick="changeMonth(-1)" class="cal-nav-btn">&lt;</button>
+                        <button onclick="changeMonth(-1)" class="cal-nav-btn"><</button>
                         <span id="calendar-month-year">Июль 2026</span>
-                        <button onclick="changeMonth(1)" class="cal-nav-btn">&gt;</button>
+                        <button onclick="changeMonth(1)" class="cal-nav-btn">></button>
                     </div>
                     <div class="calendar-weekdays">
                         <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
@@ -56,11 +64,10 @@
             </div>
 
             <div id="step-4" class="step">
-                <h1>&gt; Сбор параметров [3/3]</h1>
+                <h1>> Сбор параметров [3/3]</h1>
                 <p class="subtitle">Выбери удобное время встречи:</p>
                 
                 <div class="time-vertical-container" id="time-picker-wrapper"></div>
-                
                 <input type="hidden" id="time-select" value="00:00">
 
                 <div class="btn-group">
@@ -72,9 +79,9 @@
 
     <div id="confirm-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3>&gt; Подтверждение</h3>
+            <h3>> Подтверждение</h3>
             <p>Ты уверена в выбранных параметрах? Скрипт будет скомпилирован.</p>
-            <div class="btn-group">
+            <div class="modal-btn-group">
                 <button onclick="startDeployment()" class="btn btn-success">Да</button>
                 <button onclick="closeModal()" class="btn btn-danger">Нет</button>
             </div>
@@ -83,9 +90,9 @@
 
     <div id="sad-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color: #ef4444;">&gt; Выход из системы</h3>
+            <h3 style="color: #ef4444;">> Выход из системы</h3>
             <p>Очень жаль... Скрипт завершил работу с ошибкой 💔</p>
-            <div class="btn-group">
+            <div class="modal-btn-group">
                 <button onclick="location.reload()" class="btn btn-success">Попробовать снова</button>
             </div>
         </div>
@@ -103,6 +110,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
